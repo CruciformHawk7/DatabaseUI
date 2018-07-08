@@ -23,40 +23,114 @@ namespace DatabaseUI
     public partial class MainWindow : Window
     {
         List<UIRecordObject> records = new List<UIRecordObject>();
+        List<DBRecordObject> jsonRecords = new List<DBRecordObject>();
         List<AssetObject> assets = new List<AssetObject>();
-        string outputFile = @"C:\Users\Nikhil\Desktop\JS\testdb.json";
+        //temporarily hardcode the info
+        string mainDB = @"D:\JS\testdb.json";
+        string assetDB = @"D:\JS\testdb_locations.json";
 
-        private void makeString()
+        private void mainMake()
         {
             string op = JsonConvert.SerializeObject(records);
-            System.IO.File.WriteAllText(outputFile, op);
-
+            System.IO.File.WriteAllText(mainDB, op);
         }
 
-        private void readString()
+        private void Converter(List<UIRecordObject> inp)
         {
-            string text = System.IO.File.ReadAllText(outputFile);
-            List<UIRecordObject> deserialisedProduct = JsonConvert.DeserializeObject<List<UIRecordObject>> (text); //deserialisedProduct = records
+            jsonRecords.Clear();
+            foreach (var item in inp)
+            {
+                int n = -1, o = -1;
+                foreach (var p in assets)
+                {
+                    if (p.Description == item.id)
+                    {
+                        n = p.assetID;
+                    }
+                    if (p.Description == item.target)
+                    {
+                        o = p.assetID;
+                    }
+                }
+                jsonRecords.Add(new DBRecordObject() {
+                    id = n,
+                    assetLocation =item.assetLocation,
+                    direction =item.direction,
+                    target = o
+                });
+            }
+        }
 
-            lstContents.Items.Clear();
-            lstContents.Items.Add(deserialisedProduct);
+        private void mainRead()
+        {
+            try
+            {
+                string text = System.IO.File.ReadAllText(mainDB);
+                List<UIRecordObject> deserialisedProduct = JsonConvert.DeserializeObject<List<UIRecordObject>>(text);
+                foreach (var item in deserialisedProduct)
+                {
+                    records.Add(item);
+                }
+                lstContents.Items.Clear();
+                lstContents.Items.Add(deserialisedProduct);
+            }
+            catch (System.IO.DirectoryNotFoundException ex)
+            {
+                MessageBox.Show("Directory Not Found!" + ex.Source);
+            }
+            catch (System.IO.FileNotFoundException ex)
+            {
+                MessageBox.Show("File not found!" + ex.FileName);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Unknown error. This should'nt have happened!\n" + ex.Message);
+            }
+            //handle more errors
+        }
 
-            
+        private void assetMake()
+        {
+            string op = JsonConvert.SerializeObject(assets);
+            System.IO.File.WriteAllText(assetDB, op);
+        }
+
+        private void assetRead()
+        {
+            try
+            {
+                string text = System.IO.File.ReadAllText(mainDB);
+                List<AssetObject> deserialisedProduct = JsonConvert.DeserializeObject<List<AssetObject>>(text);
+                foreach (var item in deserialisedProduct)
+                {
+                    assets.Add(item);
+                }
+                lstAssets.Items.Clear();
+                lstAssets.Items.Add(deserialisedProduct);
+            }
+            catch (System.IO.DirectoryNotFoundException ex)
+            {
+                MessageBox.Show("Directory Not Found!" + ex.Source);
+            }
+            catch (System.IO.FileNotFoundException ex)
+            {
+                MessageBox.Show("File not found!" + ex.FileName);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Unknown error. This should'nt have happened!\n" + ex.Message);
+            }
+            //handle more errors
         }
 
         public MainWindow()
         {
             InitializeComponent();
 
-            //lstContents.Items.Add(new UIRecordObject() { id = "Road", target = "UG Building", assetLocation = "UG.jpg", direction = Direction.North });
-            //lstContents.Items.Add(new UIRecordObject() { id = "Road", target = "PG Building", assetLocation = "PG.jpg", direction = Direction.South });
+            assetRead();
+            mainRead();
 
-            records.Add(new UIRecordObject() { id = "Road", target = "UG Building", assetLocation = "UG.jpg", direction = Direction.North }); 
-            lstContents.Items.Add(records);
-
-            lstContents.Items.Clear();
-
-            if (lstContents.SelectedIndex == -1) btnDelete.IsEnabled = false;
+            //if (lstContents.SelectedIndex == -1) btnDelete.IsEnabled = false;
 
             foreach (var item in records)
             {
@@ -65,11 +139,7 @@ namespace DatabaseUI
                 cboID.SelectedIndex = 0;
                 cboTarget.SelectedIndex = 0;
             }
-
-            //lstAssets.Items.Add(new AssetObject() { assetID = 0, Description = "Road" });
-            //lstAssets.Items.Add(new AssetObject() { assetID = 1, Description = "UG Building" });
-            //lstAssets.Items.Add(new AssetObject() { assetID = 2, Description = "PG Building" });
-
+           
             lstAssets.Items.Add(assets);
 
             if (cboID.SelectedValue == null) {
@@ -79,6 +149,20 @@ namespace DatabaseUI
                 cboTarget.IsEnabled = false;
             }
             
+        }
+
+        private void allcomments()
+        {
+            //lstContents.Items.Add(new UIRecordObject() { id = "Road", target = "UG Building", assetLocation = "UG.jpg", direction = Direction.North });
+            //lstContents.Items.Add(new UIRecordObject() { id = "Road", target = "PG Building", assetLocation = "PG.jpg", direction = Direction.South });
+
+            //records.Add(new UIRecordObject() { id = "Road", target = "UG Building", assetLocation = "UG.jpg", direction = Direction.North }); 
+
+
+            //lstAssets.Items.Add(new AssetObject() { assetID = 0, Description = "Road" });
+            //lstAssets.Items.Add(new AssetObject() { assetID = 1, Description = "UG Building" });
+            //lstAssets.Items.Add(new AssetObject() { assetID = 2, Description = "PG Building" });
+
         }
 
         public void Converter(DBRecordObject dbRecordObject)
@@ -98,7 +182,7 @@ namespace DatabaseUI
 
         private void btnRefresh_Click(object sender, RoutedEventArgs e)
         {
-            readString();
+            mainRead();
 
         }
 
@@ -110,7 +194,7 @@ namespace DatabaseUI
 
         private void btnSave_Click(object sender, RoutedEventArgs e)
         {
-            makeString();
+            mainMake();
         }
     }
 
